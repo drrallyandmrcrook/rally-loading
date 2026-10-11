@@ -5,131 +5,194 @@
 <title>RallyTTT</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  :root {
-    --bg: #0d0f12;
-    --panel: rgba(10, 12, 16, 0.72);
-    --text: #eef1f5;
-    --muted: #9aa3ae;
-    --accent: #e8a33a;
-    --bar-bg: rgba(255, 255, 255, 0.12);
-  }
-  * { box-sizing: border-box; }
+  /* This page is meant to look slapped together. Please do not fix it. */
   html, body {
     margin: 0; height: 100%; overflow: hidden;
-    background: var(--bg); color: var(--text);
-    font-family: "Segoe UI", Roboto, Arial, sans-serif;
     cursor: none; user-select: none;
   }
-
-  /* Background: still image under an optional looping video.
-     Missing files are hidden by the script, leaving the gradient. */
-  #bg-image, #bg-video {
-    position: fixed; inset: 0; width: 100%; height: 100%;
-    object-fit: cover;
-  }
-  #bg-fallback {
-    position: fixed; inset: 0;
-    background:
-      radial-gradient(ellipse at 20% 10%, #2a2f38 0%, transparent 60%),
-      radial-gradient(ellipse at 90% 90%, #3a2512 0%, transparent 55%),
-      var(--bg);
-  }
-  #shade {
-    position: fixed; inset: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.35) 100%);
+  body {
+    background-color: #008080;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,0,0.08) 0 12px, transparent 12px 24px),
+      radial-gradient(circle at 80% 20%, #ff00ff 0%, transparent 35%);
+    color: #000;
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
   }
 
-  #top {
-    position: fixed; top: 6vh; left: 6vw; right: 6vw;
+  #marquee {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: #ff0000; color: #ffff00;
+    font: bold 22px "Courier New", monospace;
+    border-bottom: 4px dashed #00ff00;
+    padding: 2px 0;
+    z-index: 10;
   }
+
+  #title {
+    position: absolute; top: 46px; left: 2.5vw;
+    margin: 0;
+    font: 900 clamp(48px, 8vw, 128px) Impact, "Arial Black", sans-serif;
+    letter-spacing: -2px;
+    background: linear-gradient(180deg, #ffef00 0%, #ff8c00 45%, #ff0000 55%, #8b0000 100%);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 3px #000;
+    filter: drop-shadow(6px 6px 0 #0000ff);
+    transform: rotate(-4deg) skewX(-8deg);
+    transform-origin: left center;
+  }
+
   #server {
-    margin: 0; font-size: clamp(32px, 4.5vw, 64px); font-weight: 800;
-    letter-spacing: 0.02em; text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+    position: absolute; top: calc(46px + clamp(60px, 9vw, 140px)); left: 7vw;
+    font: italic bold clamp(16px, 1.6vw, 26px) "Times New Roman", serif;
+    color: #fff; background: #000080;
+    padding: 2px 10px;
+    transform: rotate(1.5deg);
+    border: 2px outset #c0c0c0;
   }
-  #subtitle {
-    margin-top: 6px; font-size: clamp(14px, 1.4vw, 20px); color: var(--muted);
-  }
-  #subtitle b { color: var(--accent); font-weight: 600; }
+  #server .map { color: #ff0; text-decoration: underline wavy #f00; }
 
-  #bottom {
-    position: fixed; left: 6vw; right: 6vw; bottom: 7vh;
+  #new {
+    position: absolute; top: 60px; left: 50vw;
+    font: bold 28px Arial, sans-serif; color: #f00;
+    background: #ff0; border: 3px solid #f00; padding: 0 8px;
+    transform: rotate(14deg);
+    animation: blink 0.8s steps(1) infinite;
   }
-  #tip {
-    max-width: 900px; min-height: 2.8em;
-    font-size: clamp(15px, 1.5vw, 22px); line-height: 1.4;
-    transition: opacity 0.6s ease;
+  @keyframes blink { 50% { visibility: hidden; } }
+
+  /* The story. It is supposed to run off the bottom of the screen. */
+  #story {
+    position: absolute;
+    top: calc(46px + clamp(110px, 14vw, 210px));
+    left: 2vw; width: 56vw;
+    margin: 0; padding: 14px 18px 0;
+    background: #fffff0;
+    border: 5px ridge #a0522d;
+    box-shadow: 10px 10px 0 #000;
+    font: clamp(17px, 1.75vw, 30px)/1.25 "Times New Roman", serif;
+    text-align: justify;
+    transform: rotate(-1.2deg);
   }
-  #tip::before { content: "TIP  "; color: var(--accent); font-weight: 700; letter-spacing: 0.1em; }
-  #status-row {
-    display: flex; justify-content: space-between; gap: 16px;
-    margin: 22px 0 8px; font-size: 14px; color: var(--muted);
+  #story::first-letter {
+    float: left; font: bold 3.4em/0.85 "Old English Text MT", "Times New Roman", serif;
+    color: #8b0000; margin: 4px 8px 0 0;
   }
-  #status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* Fake Windows 98 media player window on the right. */
+  #player {
+    position: absolute; top: 120px; right: 3vw;
+    width: min(34vw, 62vh);
+    background: #c0c0c0;
+    border: 3px outset #fff;
+    box-shadow: -8px 8px 0 rgba(0,0,0,0.6);
+    transform: rotate(2.5deg);
+    font-family: Tahoma, Arial, sans-serif;
+  }
+  #player .bar {
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: #fff; font-weight: bold; font-size: 15px;
+    padding: 3px 4px;
+  }
+  #player .bar span { flex: 1; white-space: nowrap; overflow: hidden; }
+  #player .bar i {
+    font-style: normal; width: 18px; height: 16px; line-height: 14px;
+    text-align: center; background: #c0c0c0; color: #000;
+    border: 2px outset #fff; font-size: 12px;
+  }
+  #player video {
+    display: block; width: calc(100% - 12px); margin: 6px;
+    aspect-ratio: 1; object-fit: cover; background: #000;
+    border: 2px inset #fff;
+    image-rendering: pixelated;
+  }
+  #player .caption {
+    margin: 0 6px 6px; font-size: 13px;
+    border: 2px inset #fff; background: #fff; padding: 2px 4px;
+    white-space: nowrap; overflow: hidden;
+  }
+
+  /* Loading status: a sticky note stuck under the player. */
+  #note {
+    position: absolute;
+    top: calc(120px + min(34vw, 62vh) + 70px); right: 6vw;
+    width: min(28vw, 420px);
+    background: #fff68f; padding: 10px 14px 14px;
+    box-shadow: 4px 6px 10px rgba(0,0,0,0.5);
+    transform: rotate(-3deg);
+    font-size: 17px;
+  }
+  #note::before {
+    content: ""; position: absolute; top: -12px; left: 40%;
+    width: 90px; height: 24px;
+    background: rgba(220,220,200,0.7); transform: rotate(4deg);
+  }
+  #note b { font-size: 22px; color: #c00; }
+  #status { display: block; margin: 4px 0 8px; word-break: break-all; }
   #bar {
-    height: 6px; border-radius: 3px; background: var(--bar-bg); overflow: hidden;
+    height: 22px; border: 2px inset #fff; background: #fff; padding: 2px;
   }
   #bar-fill {
-    height: 100%; width: 0%; background: var(--accent);
-    transition: width 0.4s ease;
+    height: 100%; width: 0%;
+    background: repeating-linear-gradient(90deg, #000080 0 14px, transparent 14px 17px);
   }
   #bar.indeterminate #bar-fill {
-    width: 30%; animation: slide 1.6s ease-in-out infinite;
+    width: 35%; animation: shuffle 2.4s steps(8) infinite alternate;
   }
-  @keyframes slide {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(340%); }
+  @keyframes shuffle { to { margin-left: 65%; } }
+  #count { font: 13px "Courier New", monospace; }
+
+  #construction {
+    position: absolute; bottom: 10px; right: 2vw;
+    font: bold 15px "Courier New", monospace;
+    background: repeating-linear-gradient(-45deg, #ffcc00 0 14px, #000 14px 28px);
+    color: #fff; padding: 6px 10px;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
+    transform: rotate(-2deg);
   }
 </style>
 </head>
 <body>
-  <div id="bg-fallback"></div>
-  <img id="bg-image" src="bg.jpg" alt="" onerror="this.remove()">
-  <video id="bg-video" src="bg.webm" autoplay muted loop playsinline onerror="this.remove()"></video>
-  <audio id="music" src="music.mp3" loop preload="auto" onerror="this.remove()"></audio>
-  <div id="shade"></div>
+  <marquee id="marquee" scrollamount="9">*** WELCOME TO RALLYTTT *** TRUST NO ONE *** EVILCORP IS WATCHING *** TRAITORCO IS HIRING *** YOU ARE VISITOR #000000001 *** BEST VIEWED IN NETSCAPE NAVIGATOR AT 800x600 ***</marquee>
 
-  <div id="top">
-    <h1 id="server">RallyTTT</h1>
-    <div id="subtitle">Joining&hellip;</div>
+  <h1 id="title">RALLYTTT</h1>
+  <div id="new">NEW!!</div>
+  <div id="server"><span id="server-name">RallyTTT</span> &mdash; map: <span class="map" id="map">???</span></div>
+
+  <div id="story">Years afte rthe kuboom event has subsisded new entiteies hav emade their way to eh highest echeilkoenbs of our oscietyies oone ceo fhtem oknown as evilcopr a dpharmacuetorical fronta agency that is acutally clandestine oeprations in depeep reigons of the world and the acts to which tehy are orepsodnsible are unspeakable and top secret and unknown to all denizens of the world and the shadow oragnization traitorco repsonsible for the largest arsenal of weaponryr spread across teh globe logna geter the coallpse of teh rallypack weapons corporation in congjunction with shadow groups who themselves weeek dto end evilcorps dreign of tretror upon the world and Who among them are the breagear sttraito and has what it takes to defeat evilcorp you ango and in the years that followed the world was forever changed by the rise of the new world ordrer and the conglomoration of powers that would seek to control the fate of all mankind and the forces of evilcorp have already begun to mobilize their private militaries and clandestine operatives in preperation for the final confrontation which will determine the fate of humanity itself and the only ones who stand in their way are the brave soldiers of traitorco who have sworn to protect the innocents of the world from the unspeakable horrors that lurk beyond the veil of civilization and their mission is to infiltrate the most heavily guarded installations on earth and uncover the truth behind the kuboom event and the dark secrets that have been hidden from the public for decades and only you can stop the impending catastrophy that threatens to engulf the entire planet in a wave of destruction unlike anything the world has ever seen before and the fate of the world rests in your hands soldier and remember trust no one for everyone has a price and everyone has a secret and the greatest threat to humanity may not be evilcorp itself but the traitors who walk among us and the shadowy forces who pull the strings from behind the scenes and the final battle is approaching and there is no turning back now</div>
+
+  <div id="player">
+    <div class="bar"><span>evilcorp_leaked_FINAL(2).wmv</span><i>_</i><i>&#9633;</i><i>x</i></div>
+    <video id="video" autoplay muted loop playsinline>
+      <source src="video.webm" type="video/webm">
+      <source src="video.mp4" type="video/mp4">
+    </video>
+    <div class="caption">&#9654; Now playing... do not tell anyone</div>
   </div>
 
-  <div id="bottom">
-    <div id="tip"></div>
-    <div id="status-row">
-      <span id="status">Connecting&hellip;</span>
-      <span id="count"></span>
-    </div>
+  <div id="note">
+    <b>LOADING!!!</b>
+    <span id="status">connecting (please wait)</span>
     <div id="bar" class="indeterminate"><div id="bar-fill"></div></div>
+    <span id="count"></span>
   </div>
+
+  <div id="construction">!! UNDER CONSTRUCTION !!</div>
 
 <script>
-  // Edit these freely. One is shown every few seconds, in random order.
-  var TIPS = [
-    "Traitors can buy equipment from their shop with credits earned during the round.",
-    "Detectives can identify bodies to reveal who died and how.",
-    "Search a body before trusting anyone near it.",
-    "Watch who is standing near you when the lights go out.",
-    "Innocents win when every traitor is dead, or when time runs out."
-  ];
-  var TIP_SECONDS = 7;
-
-  var params = new URLSearchParams(location.search);
   var $ = function (id) { return document.getElementById(id); };
 
   // The server's URL can carry ?map=%m; GameDetails overrides it later.
-  if (params.get("map")) setMap(params.get("map"));
-
-  function setMap(map) {
-    $("subtitle").innerHTML = "Map: <b></b>";
-    $("subtitle").querySelector("b").textContent = map;
-  }
+  var params = new URLSearchParams(location.search);
+  if (params.get("map")) $("map").textContent = params.get("map");
 
   // ---- Hooks called by Garry's Mod (lua/menu/loading.lua) ----
 
   function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode, volume, language, gamemodeNice) {
-    if (servername) $("server").textContent = servername;
-    if (mapname) setMap(mapname);
-    startMusic(typeof volume === "number" ? volume : 0.5);
+    if (servername) $("server-name").textContent = servername;
+    if (mapname) $("map").textContent = mapname;
+    unmuteVideo(typeof volume === "number" ? volume : 0.5);
   }
 
   function SetStatusChanged(status) {
@@ -141,7 +204,7 @@
   function SetFilesNeeded(n) { filesNeeded = n; updateBar(); }
   function DownloadingFile(name) {
     if (filesNeeded > 0) filesNeeded--;
-    $("status").textContent = "Downloading " + name;
+    $("status").textContent = "downloading " + name;
     updateBar();
   }
 
@@ -150,36 +213,23 @@
     var done = Math.max(0, filesTotal - filesNeeded);
     $("bar").classList.remove("indeterminate");
     $("bar-fill").style.width = (100 * done / filesTotal).toFixed(1) + "%";
-    $("count").textContent = done + " / " + filesTotal + " files";
+    $("count").textContent = done + "/" + filesTotal + " filez";
   }
 
-  // ---- Music: follows the player's in-game music volume ----
+  // ---- Video sound: starts muted (always allowed to autoplay), then
+  // unmutes at the player's in-game music volume once GMod reports it. ----
 
-  function startMusic(volume) {
-    var music = $("music");
-    if (!music || volume <= 0) return;
-    music.volume = Math.min(1, Math.max(0, volume));
-    var p = music.play();
-    if (p && p.catch) p.catch(function () {});
+  function unmuteVideo(volume) {
+    var video = $("video");
+    if (volume <= 0) return;
+    video.volume = Math.min(1, Math.max(0, volume));
+    video.muted = false;
+    var p = video.play();
+    if (p && p.catch) p.catch(function () {
+      video.muted = true;
+      video.play();
+    });
   }
-
-  // ---- Tips ----
-
-  var order = [];
-  function nextTip() {
-    if (!order.length) {
-      order = TIPS.slice();
-      for (var i = order.length - 1; i > 0; i--) {
-        var j = Math.floor(Math.random() * (i + 1));
-        var t = order[i]; order[i] = order[j]; order[j] = t;
-      }
-    }
-    var el = $("tip");
-    el.style.opacity = 0;
-    setTimeout(function () { el.textContent = order.pop(); el.style.opacity = 1; }, 600);
-  }
-  nextTip();
-  setInterval(nextTip, TIP_SECONDS * 1000);
 </script>
 </body>
 </html>
