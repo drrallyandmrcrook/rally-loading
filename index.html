@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyTTT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root {
+    --bg: #0d0f12;
+    --panel: rgba(10, 12, 16, 0.72);
+    --text: #eef1f5;
+    --muted: #9aa3ae;
+    --accent: #e8a33a;
+    --bar-bg: rgba(255, 255, 255, 0.12);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: var(--bg); color: var(--text);
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    cursor: none; user-select: none;
+  }
+
+  /* Background: still image under an optional looping video.
+     Missing files are hidden by the script, leaving the gradient. */
+  #bg-image, #bg-video {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    object-fit: cover;
+  }
+  #bg-fallback {
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 10%, #2a2f38 0%, transparent 60%),
+      radial-gradient(ellipse at 90% 90%, #3a2512 0%, transparent 55%),
+      var(--bg);
+  }
+  #shade {
+    position: fixed; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.15) 45%, rgba(0,0,0,0.35) 100%);
+  }
+
+  #top {
+    position: fixed; top: 6vh; left: 6vw; right: 6vw;
+  }
+  #server {
+    margin: 0; font-size: clamp(32px, 4.5vw, 64px); font-weight: 800;
+    letter-spacing: 0.02em; text-shadow: 0 2px 12px rgba(0,0,0,0.6);
+  }
+  #subtitle {
+    margin-top: 6px; font-size: clamp(14px, 1.4vw, 20px); color: var(--muted);
+  }
+  #subtitle b { color: var(--accent); font-weight: 600; }
+
+  #bottom {
+    position: fixed; left: 6vw; right: 6vw; bottom: 7vh;
+  }
+  #tip {
+    max-width: 900px; min-height: 2.8em;
+    font-size: clamp(15px, 1.5vw, 22px); line-height: 1.4;
+    transition: opacity 0.6s ease;
+  }
+  #tip::before { content: "TIP  "; color: var(--accent); font-weight: 700; letter-spacing: 0.1em; }
+  #status-row {
+    display: flex; justify-content: space-between; gap: 16px;
+    margin: 22px 0 8px; font-size: 14px; color: var(--muted);
+  }
+  #status { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #bar {
+    height: 6px; border-radius: 3px; background: var(--bar-bg); overflow: hidden;
+  }
+  #bar-fill {
+    height: 100%; width: 0%; background: var(--accent);
+    transition: width 0.4s ease;
+  }
+  #bar.indeterminate #bar-fill {
+    width: 30%; animation: slide 1.6s ease-in-out infinite;
+  }
+  @keyframes slide {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(340%); }
+  }
+</style>
+</head>
+<body>
+  <div id="bg-fallback"></div>
+  <img id="bg-image" src="bg.jpg" alt="" onerror="this.remove()">
+  <video id="bg-video" src="bg.webm" autoplay muted loop playsinline onerror="this.remove()"></video>
+  <audio id="music" src="music.mp3" loop preload="auto" onerror="this.remove()"></audio>
+  <div id="shade"></div>
+
+  <div id="top">
+    <h1 id="server">RallyTTT</h1>
+    <div id="subtitle">Joining&hellip;</div>
+  </div>
+
+  <div id="bottom">
+    <div id="tip"></div>
+    <div id="status-row">
+      <span id="status">Connecting&hellip;</span>
+      <span id="count"></span>
+    </div>
+    <div id="bar" class="indeterminate"><div id="bar-fill"></div></div>
+  </div>
+
+<script>
+  // Edit these freely. One is shown every few seconds, in random order.
+  var TIPS = [
+    "Traitors can buy equipment from their shop with credits earned during the round.",
+    "Detectives can identify bodies to reveal who died and how.",
+    "Search a body before trusting anyone near it.",
+    "Watch who is standing near you when the lights go out.",
+    "Innocents win when every traitor is dead, or when time runs out."
+  ];
+  var TIP_SECONDS = 7;
+
+  var params = new URLSearchParams(location.search);
+  var $ = function (id) { return document.getElementById(id); };
+
+  // The server's URL can carry ?map=%m; GameDetails overrides it later.
+  if (params.get("map")) setMap(params.get("map"));
+
+  function setMap(map) {
+    $("subtitle").innerHTML = "Map: <b></b>";
+    $("subtitle").querySelector("b").textContent = map;
+  }
+
+  // ---- Hooks called by Garry's Mod (lua/menu/loading.lua) ----
+
+  function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode, volume, language, gamemodeNice) {
+    if (servername) $("server").textContent = servername;
+    if (mapname) setMap(mapname);
+    startMusic(typeof volume === "number" ? volume : 0.5);
+  }
+
+  function SetStatusChanged(status) {
+    $("status").textContent = status;
+  }
+
+  var filesTotal = 0, filesNeeded = 0;
+  function SetFilesTotal(n) { filesTotal = n; updateBar(); }
+  function SetFilesNeeded(n) { filesNeeded = n; updateBar(); }
+  function DownloadingFile(name) {
+    if (filesNeeded > 0) filesNeeded--;
+    $("status").textContent = "Downloading " + name;
+    updateBar();
+  }
+
+  function updateBar() {
+    if (!filesTotal) return;
+    var done = Math.max(0, filesTotal - filesNeeded);
+    $("bar").classList.remove("indeterminate");
+    $("bar-fill").style.width = (100 * done / filesTotal).toFixed(1) + "%";
+    $("count").textContent = done + " / " + filesTotal + " files";
+  }
+
+  // ---- Music: follows the player's in-game music volume ----
+
+  function startMusic(volume) {
+    var music = $("music");
+    if (!music || volume <= 0) return;
+    music.volume = Math.min(1, Math.max(0, volume));
+    var p = music.play();
+    if (p && p.catch) p.catch(function () {});
+  }
+
+  // ---- Tips ----
+
+  var order = [];
+  function nextTip() {
+    if (!order.length) {
+      order = TIPS.slice();
+      for (var i = order.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = order[i]; order[i] = order[j]; order[j] = t;
+      }
+    }
+    var el = $("tip");
+    el.style.opacity = 0;
+    setTimeout(function () { el.textContent = order.pop(); el.style.opacity = 1; }, 600);
+  }
+  nextTip();
+  setInterval(nextTip, TIP_SECONDS * 1000);
+</script>
+</body>
+</html>
