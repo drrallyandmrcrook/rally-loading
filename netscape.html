@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>RallyTTT</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  /* This page is meant to look slapped together. Please do not fix it. */
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    cursor: none; user-select: none;
+  }
+  body {
+    background-color: #008080;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(255,255,0,0.08) 0 12px, transparent 12px 24px),
+      radial-gradient(circle at 80% 20%, #ff00ff 0%, transparent 35%);
+    color: #000;
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+  }
+
+  #marquee {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: #ff0000; color: #ffff00;
+    font: bold 22px "Courier New", monospace;
+    border-bottom: 4px dashed #00ff00;
+    padding: 2px 0;
+    z-index: 10;
+  }
+
+  #title {
+    position: absolute; top: 46px; left: 2.5vw;
+    margin: 0;
+    font: 900 clamp(48px, 8vw, 128px) Impact, "Arial Black", sans-serif;
+    letter-spacing: -2px;
+    background: linear-gradient(180deg, #ffef00 0%, #ff8c00 45%, #ff0000 55%, #8b0000 100%);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    -webkit-text-stroke: 3px #000;
+    filter: drop-shadow(6px 6px 0 #0000ff);
+    transform: rotate(-4deg) skewX(-8deg);
+    transform-origin: left center;
+  }
+
+  #server {
+    position: absolute; top: calc(46px + clamp(60px, 9vw, 140px)); left: 7vw;
+    font: italic bold clamp(16px, 1.6vw, 26px) "Times New Roman", serif;
+    color: #fff; background: #000080;
+    padding: 2px 10px;
+    transform: rotate(1.5deg);
+    border: 2px outset #c0c0c0;
+  }
+  #server .map { color: #ff0; text-decoration: underline wavy #f00; }
+
+  #new {
+    position: absolute; top: 60px; left: 50vw;
+    font: bold 28px Arial, sans-serif; color: #f00;
+    background: #ff0; border: 3px solid #f00; padding: 0 8px;
+    transform: rotate(14deg);
+    animation: blink 0.8s steps(1) infinite;
+  }
+  @keyframes blink { 50% { visibility: hidden; } }
+
+  /* The story. It is supposed to run off the bottom of the screen. */
+  #story {
+    position: absolute;
+    top: calc(46px + clamp(110px, 14vw, 210px));
+    left: 2vw; width: 56vw;
+    margin: 0; padding: 14px 18px 0;
+    background: #fffff0;
+    border: 5px ridge #a0522d;
+    box-shadow: 10px 10px 0 #000;
+    font: clamp(17px, 1.75vw, 30px)/1.25 "Times New Roman", serif;
+    text-align: justify;
+    transform: rotate(-1.2deg);
+  }
+  #story::first-letter {
+    float: left; font: bold 3.4em/0.85 "Old English Text MT", "Times New Roman", serif;
+    color: #8b0000; margin: 4px 8px 0 0;
+  }
+
+  /* Fake Windows 98 media player window on the right. */
+  #player {
+    position: absolute; top: 120px; right: 3vw;
+    width: min(34vw, 62vh);
+    background: #c0c0c0;
+    border: 3px outset #fff;
+    box-shadow: -8px 8px 0 rgba(0,0,0,0.6);
+    transform: rotate(2.5deg);
+    font-family: Tahoma, Arial, sans-serif;
+  }
+  #player .bar {
+    display: flex; align-items: center; gap: 6px;
+    background: linear-gradient(90deg, #000080, #1084d0);
+    color: #fff; font-weight: bold; font-size: 15px;
+    padding: 3px 4px;
+  }
+  #player .bar span { flex: 1; white-space: nowrap; overflow: hidden; }
+  #player .bar i {
+    font-style: normal; width: 18px; height: 16px; line-height: 14px;
+    text-align: center; background: #c0c0c0; color: #000;
+    border: 2px outset #fff; font-size: 12px;
+  }
+  #player video {
+    display: block; width: calc(100% - 12px); margin: 6px;
+    aspect-ratio: 1; object-fit: cover; background: #000;
+    border: 2px inset #fff;
+    image-rendering: pixelated;
+  }
+  #player .caption {
+    margin: 0 6px 6px; font-size: 13px;
+    border: 2px inset #fff; background: #fff; padding: 2px 4px;
+    white-space: nowrap; overflow: hidden;
+  }
+
+  /* Loading status: a sticky note stuck under the player. */
+  #note {
+    position: absolute;
+    top: calc(120px + min(34vw, 62vh) + 70px); right: 6vw;
+    width: min(28vw, 420px);
+    background: #fff68f; padding: 10px 14px 14px;
+    box-shadow: 4px 6px 10px rgba(0,0,0,0.5);
+    transform: rotate(-3deg);
+    font-size: 17px;
+  }
+  #note::before {
+    content: ""; position: absolute; top: -12px; left: 40%;
+    width: 90px; height: 24px;
+    background: rgba(220,220,200,0.7); transform: rotate(4deg);
+  }
+  #note b { font-size: 22px; color: #c00; }
+  #status { display: block; margin: 4px 0 8px; word-break: break-all; }
+  #bar {
+    height: 22px; border: 2px inset #fff; background: #fff; padding: 2px;
+  }
+  #bar-fill {
+    height: 100%; width: 0%;
+    background: repeating-linear-gradient(90deg, #000080 0 14px, transparent 14px 17px);
+  }
+  #bar.indeterminate #bar-fill {
+    width: 35%; animation: shuffle 2.4s steps(8) infinite alternate;
+  }
+  @keyframes shuffle { to { margin-left: 65%; } }
+  #count { font: 13px "Courier New", monospace; }
+
+  #construction {
+    position: absolute; bottom: 10px; right: 2vw;
+    font: bold 15px "Courier New", monospace;
+    background: repeating-linear-gradient(-45deg, #ffcc00 0 14px, #000 14px 28px);
+    color: #fff; padding: 6px 10px;
+    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
+    transform: rotate(-2deg);
+  }
+</style>
+</head>
+<body>
+  <marquee id="marquee" scrollamount="9">*** WELCOME TO RALLYTTT *** TRUST NO ONE *** EVILCORP IS WATCHING *** TRAITORCO IS HIRING *** YOU ARE VISITOR #000000001 ***</marquee>
+
+  <h1 id="title">RALLYTTT</h1>
+  <div id="new">NEW!!</div>
+  <div id="server"><span id="server-name">RallyTTT</span> &mdash; map: <span class="map" id="map">???</span></div>
+
+  <div id="story">Years afte rthe kuboom event has subsisded new entiteies hav emade their way to eh highest echeilkoenbs of our oscietyies oone ceo fhtem oknown as evilcopr a dpharmacuetorical fronta agency that is acutally clandestine oeprations in depeep reigons of the world and the acts to which tehy are orepsodnsible are unspeakable and top secret and unknown to all denizens of the world and the shadow oragnization traitorco repsonsible for the largest arsenal of weaponryr spread across teh globe logna geter the coallpse of teh rallypack weapons corporation in congjunction with shadow groups who themselves weeek dto end evilcorps dreign of tretror upon the world and Who among them are the breagear sttraito and has what it takes to defeat evilcorp you ango and in the years that followed the world was forever changed by the rise of the new world ordrer and the conglomoration of powers that would seek to control the fate of all mankind and the forces of evilcorp have already begun to mobilize their private militaries and clandestine operatives in preperation for the final confrontation which will determine the fate of humanity itself and the only ones who stand in their way are the brave soldiers of traitorco who have sworn to protect the innocents of the world from the unspeakable horrors that lurk beyond the veil of civilization and their mission is to infiltrate the most heavily guarded installations on earth and uncover the truth behind the kuboom event and the dark secrets that have been hidden from the public for decades and only you can stop the impending catastrophy that threatens to engulf the entire planet in a wave of destruction unlike anything the world has ever seen before and the fate of the world rests in your hands soldier and remember trust no one for everyone has a price and everyone has a secret and the greatest threat to humanity may not be evilcorp itself but the traitors who walk among us and the shadowy forces who pull the strings from behind the scenes and the final battle is approaching and there is no turning back now</div>
+
+  <div id="player">
+    <div class="bar"><span>evilcorp_leaked_FINAL(2).wmv</span><i>_</i><i>&#9633;</i><i>x</i></div>
+    <video id="video" autoplay muted loop playsinline>
+      <source src="video.webm" type="video/webm">
+      <source src="video.mp4" type="video/mp4">
+    </video>
+    <div class="caption">&#9654; Now playing... do not tell anyone</div>
+  </div>
+
+  <div id="note">
+    <b>LOADING!!!</b>
+    <span id="status">connecting (please wait)</span>
+    <div id="bar" class="indeterminate"><div id="bar-fill"></div></div>
+    <span id="count"></span>
+  </div>
+
+  <div id="construction">!! UNDER CONSTRUCTION !!</div>
+
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+
+  // The server's URL can carry ?map=%m; GameDetails overrides it later.
+  var params = new URLSearchParams(location.search);
+  if (params.get("map")) $("map").textContent = params.get("map");
+
+  // ---- Hooks called by Garry's Mod (lua/menu/loading.lua) ----
+
+  function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode, volume, language, gamemodeNice) {
+    if (servername) $("server-name").textContent = servername;
+    if (mapname) $("map").textContent = mapname;
+    unmuteVideo(typeof volume === "number" ? volume : 0.5);
+  }
+
+  function SetStatusChanged(status) {
+    $("status").textContent = status;
+  }
+
+  var filesTotal = 0, filesNeeded = 0;
+  function SetFilesTotal(n) { filesTotal = n; updateBar(); }
+  function SetFilesNeeded(n) { filesNeeded = n; updateBar(); }
+  function DownloadingFile(name) {
+    if (filesNeeded > 0) filesNeeded--;
+    $("status").textContent = "downloading " + name;
+    updateBar();
+  }
+
+  function updateBar() {
+    if (!filesTotal) return;
+    var done = Math.max(0, filesTotal - filesNeeded);
+    $("bar").classList.remove("indeterminate");
+    $("bar-fill").style.width = (100 * done / filesTotal).toFixed(1) + "%";
+    $("count").textContent = done + "/" + filesTotal + " filez";
+  }
+
+  // ---- Video sound: starts muted (always allowed to autoplay), then
+  // unmutes at the player's in-game music volume once GMod reports it. ----
+
+  function unmuteVideo(volume) {
+    var video = $("video");
+    if (volume <= 0) return;
+    video.volume = Math.min(1, Math.max(0, volume));
+    video.muted = false;
+    var p = video.play();
+    if (p && p.catch) p.catch(function () {
+      video.muted = true;
+      video.play();
+    });
+  }
+</script>
+</body>
+</html>

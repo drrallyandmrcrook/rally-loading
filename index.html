@@ -4,221 +4,488 @@
 <meta charset="utf-8">
 <title>RallyTTT</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Oswald:wght@500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
 <style>
-  /* This page is meant to look slapped together. Please do not fix it. */
+  /* Everything is laid out on a fixed 1920x1080 stage that is scaled to fit
+     the screen, so the layout is identical at any 16:9 resolution. */
   html, body {
     margin: 0; height: 100%; overflow: hidden;
-    cursor: none; user-select: none;
+    background: #000; cursor: none; user-select: none;
   }
-  body {
-    background-color: #008080;
-    background-image:
-      repeating-linear-gradient(45deg, rgba(255,255,0,0.08) 0 12px, transparent 12px 24px),
-      radial-gradient(circle at 80% 20%, #ff00ff 0%, transparent 35%);
-    color: #000;
-    font-family: "Comic Sans MS", "Comic Sans", cursive;
-  }
-
-  #marquee {
-    position: fixed; top: 0; left: 0; right: 0;
-    background: #ff0000; color: #ffff00;
-    font: bold 22px "Courier New", monospace;
-    border-bottom: 4px dashed #00ff00;
-    padding: 2px 0;
-    z-index: 10;
+  #stage {
+    position: absolute; left: 50%; top: 50%;
+    width: 1920px; height: 1080px;
+    margin: -540px 0 0 -960px;
+    overflow: hidden;
+    background: #0b0c0a;
+    color: #c8cbbf;
+    font-family: "Share Tech Mono", Consolas, "Lucida Console", monospace;
   }
 
-  #title {
-    position: absolute; top: 46px; left: 2.5vw;
-    margin: 0;
-    font: 900 clamp(48px, 8vw, 128px) Impact, "Arial Black", sans-serif;
-    letter-spacing: -2px;
-    background: linear-gradient(180deg, #ffef00 0%, #ff8c00 45%, #ff0000 55%, #8b0000 100%);
-    -webkit-background-clip: text; background-clip: text;
-    color: transparent;
-    -webkit-text-stroke: 3px #000;
-    filter: drop-shadow(6px 6px 0 #0000ff);
-    transform: rotate(-4deg) skewX(-8deg);
-    transform-origin: left center;
+  /* Backdrop: the intercepted video, blown up, blurred and crushed. */
+  #backdrop {
+    position: absolute; inset: -60px;
+    width: calc(100% + 120px); height: calc(100% + 120px);
+    object-fit: cover;
+    filter: blur(14px) grayscale(0.6) brightness(0.28) contrast(1.4) sepia(0.35);
+  }
+  #grime {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 45%, transparent 30%, rgba(0,0,0,0.85) 100%),
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.22) 0 1px, transparent 1px 3px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.012) 0 1px, transparent 1px 7px);
+    pointer-events: none;
+  }
+  #scanlines {
+    position: absolute; inset: 0; z-index: 50; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.16) 0 2px, transparent 2px 4px);
+    mix-blend-mode: multiply;
   }
 
-  #server {
-    position: absolute; top: calc(46px + clamp(60px, 9vw, 140px)); left: 7vw;
-    font: italic bold clamp(16px, 1.6vw, 26px) "Times New Roman", serif;
-    color: #fff; background: #000080;
-    padding: 2px 10px;
-    transform: rotate(1.5deg);
-    border: 2px outset #c0c0c0;
-  }
-  #server .map { color: #ff0; text-decoration: underline wavy #f00; }
-
-  #new {
-    position: absolute; top: 60px; left: 50vw;
-    font: bold 28px Arial, sans-serif; color: #f00;
-    background: #ff0; border: 3px solid #f00; padding: 0 8px;
-    transform: rotate(14deg);
-    animation: blink 0.8s steps(1) infinite;
-  }
-  @keyframes blink { 50% { visibility: hidden; } }
-
-  /* The story. It is supposed to run off the bottom of the screen. */
-  #story {
+  /* ---- Panels ---- */
+  .panel {
     position: absolute;
-    top: calc(46px + clamp(110px, 14vw, 210px));
-    left: 2vw; width: 56vw;
-    margin: 0; padding: 14px 18px 0;
-    background: #fffff0;
-    border: 5px ridge #a0522d;
-    box-shadow: 10px 10px 0 #000;
-    font: clamp(17px, 1.75vw, 30px)/1.25 "Times New Roman", serif;
+    background: linear-gradient(180deg, rgba(26,28,25,0.94), rgba(10,11,10,0.94));
+    border: 2px solid #3b3e37;
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,0.08),
+      inset 0 0 0 1px #000,
+      0 0 0 2px #050505,
+      6px 8px 24px rgba(0,0,0,0.85);
+  }
+  .panel::before {   /* bolted-on corner plates */
+    content: ""; position: absolute; inset: -6px; pointer-events: none;
+    background:
+      linear-gradient(#55584f, #55584f) top left / 14px 3px no-repeat,
+      linear-gradient(#55584f, #55584f) top left / 3px 14px no-repeat,
+      linear-gradient(#55584f, #55584f) bottom right / 14px 3px no-repeat,
+      linear-gradient(#55584f, #55584f) bottom right / 3px 14px no-repeat;
+  }
+  .hd {
+    display: flex; align-items: center; gap: 12px;
+    font: 600 27px/1 Oswald, Impact, sans-serif;
+    letter-spacing: 2px; text-transform: uppercase;
+    color: #d6d9cd;
+    padding: 9px 12px 8px 16px;
+    background: linear-gradient(180deg, #2d302b, #171916);
+    border-bottom: 2px solid #000;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.06);
+  }
+  .hd .t { flex: 1; }
+  .x {
+    width: 24px; height: 24px; flex: none;
+    border: 1px solid #5b5e55; background: #1b1d19;
+    font: 18px/22px "Share Tech Mono", monospace; text-align: center; color: #9a9d92;
+  }
+  .hazard {
+    background: repeating-linear-gradient(-45deg, #d6a106 0 16px, #111 16px 32px);
+  }
+  .red { color: #e0321e; }
+  .green { color: #3ad34a; }
+  .dim { color: #7d8076; }
+
+  /* ---- Top bar ---- */
+  #topbar { position: absolute; top: 14px; left: 18px; right: 18px; height: 78px; }
+  .seg {
+    position: absolute; top: 0; height: 64px;
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 20px;
+    font-size: 27px; letter-spacing: 1px; white-space: nowrap;
+  }
+  #seg-id     { left: 0;      width: 300px; }
+  #seg-uplink { left: 316px;  width: 370px; }
+  #seg-timer  { right: 128px; width: 430px; justify-content: space-between; }
+  #seg-center {
+    left: 704px; width: 640px; height: 92px; top: -2px;
+    flex-direction: column; justify-content: center; gap: 4px; padding: 6px 0 8px;
+    clip-path: polygon(0 0, 100% 0, 100% 70%, 94% 100%, 6% 100%, 0 70%);
+  }
+  #seg-center .banner {
+    display: flex; align-items: center; justify-content: center; gap: 18px;
+    width: 92%; height: 40px;
+  }
+  #seg-center .banner .stripe { flex: 1; height: 30px; }
+  #seg-center .banner b {
+    font: 600 34px/1 Oswald, sans-serif; letter-spacing: 3px; color: #e0321e;
+    text-shadow: 0 0 12px rgba(224,50,30,0.55);
+  }
+  #seg-center .sub { font-size: 23px; letter-spacing: 3px; color: #c8cbbf; }
+  #timer {
+    font-size: 46px; color: #e0321e; letter-spacing: 2px;
+    text-shadow: 0 0 10px rgba(224,50,30,0.6);
+  }
+  #seal {
+    position: absolute; right: 6px; top: -6px;
+    width: 104px; height: 104px; border-radius: 50%;
+    border: 4px double #a8862f;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font: 600 30px/1 Oswald, sans-serif; color: #b8963c; letter-spacing: 1px;
+    background: radial-gradient(circle, rgba(60,48,18,0.85), rgba(10,9,6,0.9));
+    box-shadow: 0 0 0 3px #000, 0 0 18px rgba(0,0,0,0.9);
+    transform: rotate(-6deg);
+  }
+  #seal small { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
+
+  /* ---- Left column ---- */
+  #coms { left: 26px; top: 128px; width: 452px; height: 360px; }
+  #coms .who { display: flex; gap: 16px; padding: 16px 16px 8px; }
+  #coms .face {
+    width: 96px; height: 106px; flex: none;
+    border: 2px solid #4a4d45;
+    background:
+      radial-gradient(ellipse 34% 30% at 50% 40%, #0a0a0a 60%, transparent 62%),
+      radial-gradient(ellipse 60% 55% at 50% 105%, #1d1f1b 60%, transparent 62%),
+      linear-gradient(180deg, #3b3f38, #20221e);
+    position: relative;
+  }
+  #coms .face::after {   /* the eye slit */
+    content: ""; position: absolute; left: 33%; right: 33%; top: 36%; height: 7px;
+    background: #8a7a68; border-radius: 3px;
+  }
+  #coms .meta { font-size: 23px; line-height: 1.35; }
+  #coms .meta .green { font-size: 26px; }
+  #coms .meta .sig { display: flex; gap: 4px; margin-top: 6px; }
+  #coms .meta .sig i { width: 26px; height: 4px; background: #3ad34a; }
+  #coms .meta .sig i.off { background: #2b2d28; }
+  #handler-msg {
+    margin: 4px 18px 0; height: 132px;
+    font-size: 25px; line-height: 1.32; color: #e4e6dc;
+  }
+  #handler-msg::before { content: ">> "; color: #7d8076; }
+  #coms .input, #chatter .input {
+    position: absolute; left: 10px; right: 10px; bottom: 10px; height: 38px;
+    border: 1px solid #3b3e37; background: #070807;
+    font-size: 21px; line-height: 38px; padding-left: 12px; color: #6d7067;
+  }
+
+  #chatter { left: 26px; top: 512px; width: 452px; height: 548px; }
+  #chat-log {
+    position: absolute; left: 16px; right: 14px; top: 58px; bottom: 60px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    overflow: hidden;
+    font-size: 23px; line-height: 1.32;
+  }
+  #chat-log div { margin-top: 5px; }
+  #chat-log .n { font-weight: bold; }
+  .c1 { color: #4f7dff; } .c2 { color: #3ad34a; } .c3 { color: #e0321e; }
+  .c4 { color: #d6a106; } .c5 { color: #b08cff; } .c6 { color: #c8cbbf; }
+
+  /* ---- Briefing (the story) ---- */
+  #brief { left: 508px; top: 128px; width: 790px; height: 2000px; }
+  #brief .hd .t::before {
+    content: "\26A0"; color: #d6a106; margin-right: 12px; font-size: 30px;
+  }
+  #brief .meta {
+    display: grid; grid-template-columns: auto 1fr; gap: 2px 18px;
+    margin: 16px 24px 0; font-size: 20px; color: #8e9187;
+  }
+  #brief .meta span:nth-child(even) { color: #c8cbbf; }
+  .redact { background: #000; color: #000; padding: 0 4px; }
+  #brief .rule { margin: 14px 24px 0; height: 14px; }
+  #story {
+    margin: 18px 26px 0 24px;
+    font: 500 26px/1.32 "Barlow Condensed", "Arial Narrow", sans-serif;
+    letter-spacing: 0.2px;
+    color: #d3d6ca;
     text-align: justify;
-    transform: rotate(-1.2deg);
   }
   #story::first-letter {
-    float: left; font: bold 3.4em/0.85 "Old English Text MT", "Times New Roman", serif;
-    color: #8b0000; margin: 4px 8px 0 0;
+    font: 600 64px/0.9 Oswald, sans-serif; float: left;
+    color: #e0321e; margin: 6px 12px 0 0;
+  }
+  #stamp {
+    position: absolute; right: 30px; top: 74px;
+    font: 600 40px/1 Oswald, sans-serif; letter-spacing: 5px;
+    color: rgba(224,50,30,0.78);
+    border: 5px solid rgba(224,50,30,0.78);
+    padding: 6px 14px 4px;
+    transform: rotate(9deg);
+    mix-blend-mode: screen;
   }
 
-  /* Fake Windows 98 media player window on the right. */
-  #player {
-    position: absolute; top: 120px; right: 3vw;
-    width: min(34vw, 62vh);
-    background: #c0c0c0;
-    border: 3px outset #fff;
-    box-shadow: -8px 8px 0 rgba(0,0,0,0.6);
-    transform: rotate(2.5deg);
-    font-family: Tahoma, Arial, sans-serif;
+  /* ---- Right column: intercepted feed ---- */
+  #feed { left: 1330px; top: 128px; width: 568px; height: 636px; }
+  #feed .screen {
+    position: relative; margin: 12px; height: 544px;
+    border: 2px solid #000; background: #000; overflow: hidden;
   }
-  #player .bar {
-    display: flex; align-items: center; gap: 6px;
-    background: linear-gradient(90deg, #000080, #1084d0);
-    color: #fff; font-weight: bold; font-size: 15px;
-    padding: 3px 4px;
+  #video {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    filter: contrast(1.15) saturate(0.75) brightness(0.92);
   }
-  #player .bar span { flex: 1; white-space: nowrap; overflow: hidden; }
-  #player .bar i {
-    font-style: normal; width: 18px; height: 16px; line-height: 14px;
-    text-align: center; background: #c0c0c0; color: #000;
-    border: 2px outset #fff; font-size: 12px;
+  #feed .screen::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.3) 0 2px, transparent 2px 4px),
+      radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.7) 100%);
   }
-  #player video {
-    display: block; width: calc(100% - 12px); margin: 6px;
-    aspect-ratio: 1; object-fit: cover; background: #000;
-    border: 2px inset #fff;
-    image-rendering: pixelated;
+  .osd {
+    position: absolute; z-index: 2; font-size: 21px; color: #e4e6dc;
+    text-shadow: 0 0 4px #000, 1px 1px 0 #000;
   }
-  #player .caption {
-    margin: 0 6px 6px; font-size: 13px;
-    border: 2px inset #fff; background: #fff; padding: 2px 4px;
-    white-space: nowrap; overflow: hidden;
+  #osd-rec { top: 12px; left: 14px; }
+  #osd-rec i {
+    display: inline-block; width: 15px; height: 15px; border-radius: 50%;
+    background: #e0321e; margin-right: 8px; vertical-align: -1px;
+    animation: blink 1.1s steps(1) infinite;
+  }
+  #osd-cam { top: 12px; right: 14px; }
+  #osd-time { bottom: 12px; left: 14px; }
+  #osd-sig { bottom: 12px; right: 14px; color: #d6a106; }
+  @keyframes blink { 50% { opacity: 0; } }
+  #feed .foot {
+    position: absolute; left: 12px; right: 12px; bottom: 9px;
+    display: flex; justify-content: space-between; font-size: 19px; color: #7d8076;
   }
 
-  /* Loading status: a sticky note stuck under the player. */
-  #note {
-    position: absolute;
-    top: calc(120px + min(34vw, 62vh) + 70px); right: 6vw;
-    width: min(28vw, 420px);
-    background: #fff68f; padding: 10px 14px 14px;
-    box-shadow: 4px 6px 10px rgba(0,0,0,0.5);
-    transform: rotate(-3deg);
-    font-size: 17px;
+  /* ---- Right column: uplink / download status ---- */
+  #uplink { left: 1330px; top: 788px; width: 568px; height: 272px; }
+  #status {
+    margin: 12px 18px 0; height: 30px;
+    font-size: 21px; color: #c8cbbf;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
-  #note::before {
-    content: ""; position: absolute; top: -12px; left: 40%;
-    width: 90px; height: 24px;
-    background: rgba(220,220,200,0.7); transform: rotate(4deg);
+  #rounds-row { display: flex; align-items: flex-end; margin: 14px 16px 0; gap: 16px; }
+  #rounds {
+    flex: 1; height: 96px; padding: 8px 10px;
+    display: flex; align-items: flex-end; gap: 6px;
+    border: 1px solid #2c2e29; background: rgba(0,0,0,0.55);
   }
-  #note b { font-size: 22px; color: #c00; }
-  #status { display: block; margin: 4px 0 8px; word-break: break-all; }
-  #bar {
-    height: 22px; border: 2px inset #fff; background: #fff; padding: 2px;
+  .round {
+    width: 13px; height: 76px; flex: none;
+    border-radius: 8px 8px 2px 2px / 22px 22px 2px 2px;
+    background:
+      linear-gradient(180deg, transparent 0 30%, rgba(0,0,0,0.5) 30% 32%, transparent 32%),
+      linear-gradient(90deg, #5a3f0e, #e9c45c 38%, #b48a2c 62%, #5a3f0e);
+    box-shadow: 0 2px 0 #000;
   }
-  #bar-fill {
-    height: 100%; width: 0%;
-    background: repeating-linear-gradient(90deg, #000080 0 14px, transparent 14px 17px);
+  .round.spent { opacity: 0.13; filter: grayscale(1); }
+  #rounds.waiting .round { animation: chamber 1.6s ease-in-out infinite; }
+  @keyframes chamber { 0%, 100% { opacity: 0.13; } 50% { opacity: 0.55; } }
+  #count {
+    width: 120px; text-align: right;
+    font-size: 34px; color: #e0321e; letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(224,50,30,0.5);
   }
-  #bar.indeterminate #bar-fill {
-    width: 35%; animation: shuffle 2.4s steps(8) infinite alternate;
-  }
-  @keyframes shuffle { to { margin-left: 65%; } }
-  #count { font: 13px "Courier New", monospace; }
-
-  #construction {
-    position: absolute; bottom: 10px; right: 2vw;
-    font: bold 15px "Courier New", monospace;
-    background: repeating-linear-gradient(-45deg, #ffcc00 0 14px, #000 14px 28px);
-    color: #fff; padding: 6px 10px;
-    text-shadow: 1px 1px 0 #000, -1px -1px 0 #000;
-    transform: rotate(-2deg);
+  #count small { display: block; font-size: 16px; color: #7d8076; letter-spacing: 2px; }
+  #uplink .warn {
+    position: absolute; left: 18px; right: 18px; bottom: 12px;
+    font-size: 19px; color: #e0321e; letter-spacing: 1px;
   }
 </style>
 </head>
 <body>
-  <marquee id="marquee" scrollamount="9">*** WELCOME TO RALLYTTT *** TRUST NO ONE *** EVILCORP IS WATCHING *** TRAITORCO IS HIRING *** YOU ARE VISITOR #000000001 ***</marquee>
+<div id="stage">
+  <video id="backdrop" autoplay muted loop playsinline>
+    <source src="video.webm" type="video/webm">
+    <source src="video.mp4" type="video/mp4">
+  </video>
+  <div id="grime"></div>
 
-  <h1 id="title">RALLYTTT</h1>
-  <div id="new">NEW!!</div>
-  <div id="server"><span id="server-name">RallyTTT</span> &mdash; map: <span class="map" id="map">???</span></div>
-
-  <div id="story">Years afte rthe kuboom event has subsisded new entiteies hav emade their way to eh highest echeilkoenbs of our oscietyies oone ceo fhtem oknown as evilcopr a dpharmacuetorical fronta agency that is acutally clandestine oeprations in depeep reigons of the world and the acts to which tehy are orepsodnsible are unspeakable and top secret and unknown to all denizens of the world and the shadow oragnization traitorco repsonsible for the largest arsenal of weaponryr spread across teh globe logna geter the coallpse of teh rallypack weapons corporation in congjunction with shadow groups who themselves weeek dto end evilcorps dreign of tretror upon the world and Who among them are the breagear sttraito and has what it takes to defeat evilcorp you ango and in the years that followed the world was forever changed by the rise of the new world ordrer and the conglomoration of powers that would seek to control the fate of all mankind and the forces of evilcorp have already begun to mobilize their private militaries and clandestine operatives in preperation for the final confrontation which will determine the fate of humanity itself and the only ones who stand in their way are the brave soldiers of traitorco who have sworn to protect the innocents of the world from the unspeakable horrors that lurk beyond the veil of civilization and their mission is to infiltrate the most heavily guarded installations on earth and uncover the truth behind the kuboom event and the dark secrets that have been hidden from the public for decades and only you can stop the impending catastrophy that threatens to engulf the entire planet in a wave of destruction unlike anything the world has ever seen before and the fate of the world rests in your hands soldier and remember trust no one for everyone has a price and everyone has a secret and the greatest threat to humanity may not be evilcorp itself but the traitors who walk among us and the shadowy forces who pull the strings from behind the scenes and the final battle is approaching and there is no turning back now</div>
-
-  <div id="player">
-    <div class="bar"><span>evilcorp_leaked_FINAL(2).wmv</span><i>_</i><i>&#9633;</i><i>x</i></div>
-    <video id="video" autoplay muted loop playsinline>
-      <source src="video.webm" type="video/webm">
-      <source src="video.mp4" type="video/mp4">
-    </video>
-    <div class="caption">&#9654; Now playing... do not tell anyone</div>
+  <div id="topbar">
+    <div class="seg panel" id="seg-id"><span class="dim">ID:</span> <span id="op-id">RTT-00000</span></div>
+    <div class="seg panel" id="seg-uplink"><span class="dim">UPLINK:</span> <span class="red">COMPROMISED</span></div>
+    <div class="seg panel" id="seg-center">
+      <div class="banner"><div class="stripe hazard"></div><b>TRUST NO ONE</b><div class="stripe hazard"></div></div>
+      <div class="sub">A.O. &mdash; <span id="map">UNKNOWN</span></div>
+    </div>
+    <div class="seg panel" id="seg-timer"><span class="dim">INSERTION IN:</span> <span id="timer">--:--</span></div>
+    <div id="seal">TC<small>TRAITORCO</small></div>
   </div>
 
-  <div id="note">
-    <b>LOADING!!!</b>
-    <span id="status">connecting (please wait)</span>
-    <div id="bar" class="indeterminate"><div id="bar-fill"></div></div>
-    <span id="count"></span>
+  <div class="panel" id="coms">
+    <div class="hd"><span class="t">Coms</span><span class="x">x</span></div>
+    <div class="who">
+      <div class="face"></div>
+      <div class="meta">
+        <div class="green">Handler</div>
+        <div class="dim">Cobra-7</div>
+        <div class="dim">ENCRYPTED CHANNEL</div>
+        <div class="sig"><i></i><i></i><i></i><i class="off"></i><i class="off"></i></div>
+      </div>
+    </div>
+    <div id="handler-msg"></div>
+    <div class="input">&gt;&gt;</div>
   </div>
 
-  <div id="construction">!! UNDER CONSTRUCTION !!</div>
+  <div class="panel" id="chatter">
+    <div class="hd"><span class="t">Chatter</span><span class="x">x</span></div>
+    <div id="chat-log"></div>
+    <div class="input">type message...</div>
+  </div>
+
+  <div class="panel" id="brief">
+    <div class="hd"><span class="t">Classified Briefing</span><span class="x">x</span></div>
+    <div class="meta">
+      <span>FILE</span><span>TTT SEASON 6</span>
+      <span>CLEARANCE</span><span>BLACK</span>
+      <span>AUTHORIZED BY</span><span><span class="redact">XXXXXXXXXXXX</span></span>
+    </div>
+    <div id="stamp">EYES ONLY</div>
+    <div class="rule hazard"></div>
+    <div id="story">Years afte rthe kuboom event has subsisded new entiteies hav emade their way to eh highest echeilkoenbs of our oscietyies oone ceo fhtem oknown as evilcopr a dpharmacuetorical fronta agency that is acutally clandestine oeprations in depeep reigons of the world and the acts to which tehy are orepsodnsible are unspeakable and top secret and unknown to all denizens of the world and the shadow oragnization traitorco repsonsible for the largest arsenal of weaponryr spread across teh globe logna geter the coallpse of teh rallypack weapons corporation in congjunction with shadow groups who themselves weeek dto end evilcorps dreign of tretror upon the world and Who among them are the breagear sttraito and has what it takes to defeat evilcorp you ango and in the years that followed the world was forever changed by the rise of the new world ordrer and the conglomoration of powers that would seek to control the fate of all mankind and the forces of evilcorp have already begun to mobilize their private militaries and clandestine operatives in preperation for the final confrontation which will determine the fate of humanity itself and the only ones who stand in their way are the brave soldiers of traitorco who have sworn to protect the innocents of the world from the unspeakable horrors that lurk beyond the veil of civilization and their mission is to infiltrate the most heavily guarded installations on earth and uncover the truth behind the kuboom event and the dark secrets that have been hidden from the public for decades and only you can stop the impending catastrophy that threatens to engulf the entire planet in a wave of destruction unlike anything the world has ever seen before and the fate of the world rests in your hands soldier and remember trust no one for everyone has a price and everyone has a secret and the greatest threat to humanity may not be evilcorp itself but the traitors who walk among us and the shadowy forces who pull the strings from behind the scenes and the final battle is approaching and there is no turning back now</div>
+  </div>
+
+  <div class="panel" id="feed">
+    <div class="hd"><span class="t">Intercepted Feed</span><span class="x">x</span></div>
+    <div class="screen">
+      <video id="video" autoplay muted loop playsinline>
+        <source src="video.webm" type="video/webm">
+        <source src="video.mp4" type="video/mp4">
+      </video>
+      <div class="osd" id="osd-rec"><i></i>REC</div>
+      <div class="osd" id="osd-cam">CAM 04 // EVILCORP</div>
+      <div class="osd" id="osd-time">00:00:00:00</div>
+      <div class="osd" id="osd-sig">SIGNAL: WEAK</div>
+    </div>
+  </div>
+
+  <div class="panel" id="uplink">
+    <div class="hd"><span class="t">Uplink</span><span class="x">x</span></div>
+    <div id="status">ESTABLISHING SECURE CONNECTION...</div>
+    <div id="rounds-row">
+      <div id="rounds" class="waiting"></div>
+      <div id="count">--/--<small>FILES</small></div>
+    </div>
+    <div class="warn">DO NOT DISCONNECT &mdash; TRACE IN PROGRESS</div>
+  </div>
+
+  <div id="scanlines"></div>
+</div>
 
 <script>
   var $ = function (id) { return document.getElementById(id); };
 
-  // The server's URL can carry ?map=%m; GameDetails overrides it later.
+  // ---- Fit the 1920x1080 stage to the screen ----
+  function fit() {
+    var s = Math.min(innerWidth / 1920, innerHeight / 1080);
+    $("stage").style.transform = "scale(" + s + ")";
+  }
+  addEventListener("resize", fit);
+  fit();
+
+  // ---- Operative ID and map from the URL (?sid=%s&map=%m) ----
   var params = new URLSearchParams(location.search);
-  if (params.get("map")) $("map").textContent = params.get("map");
+  setOperative(params.get("sid"));
+  if (params.get("map")) $("map").textContent = params.get("map").toUpperCase();
+
+  function setOperative(sid) {
+    var digits = String(sid || "").replace(/\D/g, "");
+    var id = digits ? digits.slice(-5) : String(Math.floor(10000 + Math.random() * 89999));
+    $("op-id").textContent = "RTT-" + id;
+  }
 
   // ---- Hooks called by Garry's Mod (lua/menu/loading.lua) ----
 
   function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode, volume, language, gamemodeNice) {
-    if (servername) $("server-name").textContent = servername;
-    if (mapname) $("map").textContent = mapname;
+    if (mapname) $("map").textContent = mapname.toUpperCase();
+    if (steamid) setOperative(steamid);
     unmuteVideo(typeof volume === "number" ? volume : 0.5);
   }
 
   function SetStatusChanged(status) {
-    $("status").textContent = status;
+    $("status").textContent = status.toUpperCase();
   }
 
   var filesTotal = 0, filesNeeded = 0;
-  function SetFilesTotal(n) { filesTotal = n; updateBar(); }
-  function SetFilesNeeded(n) { filesNeeded = n; updateBar(); }
+  function SetFilesTotal(n) { filesTotal = n; updateRounds(); }
+  function SetFilesNeeded(n) { filesNeeded = n; updateRounds(); }
   function DownloadingFile(name) {
     if (filesNeeded > 0) filesNeeded--;
-    $("status").textContent = "downloading " + name;
-    updateBar();
+    $("status").textContent = "RECEIVING: " + name.toUpperCase();
+    updateRounds();
   }
 
-  function updateBar() {
+  // ---- Download progress as rounds in a magazine ----
+  var ROUNDS = 18;
+  for (var r = 0; r < ROUNDS; r++) {
+    var el = document.createElement("div");
+    el.className = "round spent";
+    $("rounds").appendChild(el);
+  }
+  function updateRounds() {
     if (!filesTotal) return;
     var done = Math.max(0, filesTotal - filesNeeded);
-    $("bar").classList.remove("indeterminate");
-    $("bar-fill").style.width = (100 * done / filesTotal).toFixed(1) + "%";
-    $("count").textContent = done + "/" + filesTotal + " filez";
+    var lit = Math.round(ROUNDS * done / filesTotal);
+    var els = $("rounds").children;
+    $("rounds").classList.remove("waiting");
+    for (var i = 0; i < els.length; i++) els[i].classList.toggle("spent", i >= lit);
+    $("count").innerHTML = pad(done, 2) + "/" + pad(filesTotal, 2) + "<small>FILES</small>";
   }
+  function pad(n, w) { n = String(n); while (n.length < w) n = "0" + n; return n; }
+
+  // ---- Clocks: the insertion countdown and the feed's timecode ----
+  var start = Date.now();
+  var countdown = 4 * 60 + 59;
+  setInterval(function () {
+    var t = Math.max(0, countdown - Math.floor((Date.now() - start) / 1000));
+    $("timer").textContent = pad(Math.floor(t / 60), 2) + ":" + pad(t % 60, 2);
+  }, 250);
+  setInterval(function () {
+    var ms = Date.now() - start + 3 * 3600e3 + 17 * 60e3;
+    $("osd-time").textContent = pad(Math.floor(ms / 3600e3) % 24, 2) + ":" + pad(Math.floor(ms / 60e3) % 60, 2) + ":" +
+      pad(Math.floor(ms / 1e3) % 60, 2) + ":" + pad(Math.floor(ms / 40) % 25, 2);
+  }, 40);
+
+  // ---- Handler messages (rotate) ----
+  var HANDLER = [
+    "Operative, new bounty available. Details attached.",
+    "Search every body. EvilCorp leaves no witnesses, but it leaves receipts.",
+    "TraitorCo credits are non-refundable. Spend them like you mean it.",
+    "If the detective asks, you were never here.",
+    "Kuboom readings in your sector are within acceptable limits. Probably.",
+    "Trust no one. Especially anyone who says trust no one.",
+    "The scrap is not just scrap. Bring it back to the truck."
+  ];
+  var hi = 0;
+  function nextHandler() {
+    $("handler-msg").textContent = HANDLER[hi++ % HANDLER.length];
+  }
+  nextHandler();
+  setInterval(nextHandler, 6500);
+
+  // ---- Fake operative chatter ----
+  var CHAT = [
+    ["Viper_6", "c1", "anyone seen Echo?"],
+    ["Ghostline", "c2", "nope"],
+    ["Raven", "c3", "heard a shot near the server rooms"],
+    ["Steel_9", "c6", "stay sharp"],
+    ["Nightjar", "c2", "dead body in storage bay"],
+    ["Viper_6", "c1", "which one"],
+    ["Mantis", "c4", "evilcorp truck just left the depot"],
+    ["Raven", "c3", "who bought the c4"],
+    ["Ghostline", "c2", "not me"],
+    ["Bishop", "c5", "detective is lying"],
+    ["Steel_9", "c6", "everyone is lying"],
+    ["Nightjar", "c2", "the hoist is moving by itself"],
+    ["Mantis", "c4", "thats just kuboom residue dont worry"],
+    ["Viper_6", "c1", "echo was a traitor btw"],
+    ["Bishop", "c5", "rip echo"],
+    ["Raven", "c3", "rip echo"]
+  ];
+  var ci = 0;
+  function addChat() {
+    var line = CHAT[ci++ % CHAT.length];
+    var d = document.createElement("div");
+    d.innerHTML = '<span class="n ' + line[1] + '"></span>: <span></span>';
+    d.children[0].textContent = line[0];
+    d.children[1].textContent = line[2];
+    var log = $("chat-log");
+    log.appendChild(d);
+    while (log.children.length > 14) log.removeChild(log.firstChild);
+  }
+  function chatLoop() {
+    addChat();
+    setTimeout(chatLoop, 1800 + Math.random() * 3200);
+  }
+  for (var k = 0; k < 5; k++) addChat();
+  setTimeout(chatLoop, 1500);
 
   // ---- Video sound: starts muted (always allowed to autoplay), then
   // unmutes at the player's in-game music volume once GMod reports it. ----
-
   function unmuteVideo(volume) {
     var video = $("video");
     if (volume <= 0) return;
