@@ -130,48 +130,88 @@
   #seal small { font-size: 11px; letter-spacing: 2px; margin-top: 4px; }
 
   /* ---- Left column ---- */
-  #coms { left: 26px; top: 128px; width: 452px; height: 360px; }
+  #coms { left: 26px; top: 128px; width: 452px; height: 420px; }
   #coms .who { display: flex; gap: 16px; padding: 16px 16px 8px; }
   #coms .face {
-    width: 96px; height: 106px; flex: none;
-    border: 2px solid #4a4d45;
+    position: relative; overflow: hidden;
+    width: 124px; height: 136px; flex: none;
+    border: 2px solid #4a4d45; background: #000;
+  }
+  #coms .face img, #coms .face canvas {
+    position: absolute; left: 0; top: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+  #face-base { filter: grayscale(0.35) contrast(1.15); }
+  #face-r, #face-c { mix-blend-mode: screen; opacity: 0.4; }
+  #face-r { filter: grayscale(1) brightness(0.9) sepia(1) saturate(8) hue-rotate(-40deg); }
+  #face-c { filter: grayscale(1) brightness(0.9) sepia(1) saturate(8) hue-rotate(140deg); }
+  #face-tear { filter: grayscale(0.2) contrast(1.6) brightness(1.5); visibility: hidden; }
+  #face-noise { image-rendering: pixelated; opacity: 0.6; }
+  #coms .face .roll {
+    position: absolute; left: 0; right: 0; height: 26px; top: -30px;
+    background: linear-gradient(transparent, rgba(255,255,255,0.22), transparent);
+    animation: roll 2.7s linear infinite;
+  }
+  @keyframes roll { to { top: 140px; } }
+  #coms .face::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
     background:
-      radial-gradient(ellipse 34% 30% at 50% 40%, #0a0a0a 60%, transparent 62%),
-      radial-gradient(ellipse 60% 55% at 50% 105%, #1d1f1b 60%, transparent 62%),
-      linear-gradient(180deg, #3b3f38, #20221e);
-    position: relative;
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.45) 0 1px, transparent 1px 3px),
+      radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.8) 100%);
   }
-  #coms .face::after {   /* the eye slit */
-    content: ""; position: absolute; left: 33%; right: 33%; top: 36%; height: 7px;
-    background: #8a7a68; border-radius: 3px;
-  }
+  #coms .face.drop #face-noise { opacity: 1; }
+  #coms .face.drop #face-base { opacity: 0.25; }
   #coms .meta { font-size: 23px; line-height: 1.35; }
   #coms .meta .green { font-size: 26px; }
   #coms .meta .sig { display: flex; gap: 4px; margin-top: 6px; }
   #coms .meta .sig i { width: 26px; height: 4px; background: #3ad34a; }
   #coms .meta .sig i.off { background: #2b2d28; }
   #handler-msg {
-    margin: 4px 18px 0; height: 132px;
-    font-size: 25px; line-height: 1.32; color: #e4e6dc;
+    margin: 4px 18px 0; height: 150px;
+    font-size: 22px; line-height: 1.32; color: #e4e6dc;
   }
+  #handler-n { margin-top: 6px; font-size: 17px; color: #7d8076; }
   #handler-msg::before { content: ">> "; color: #7d8076; }
-  #coms .input, #chatter .input {
+  #coms .input {
     position: absolute; left: 10px; right: 10px; bottom: 10px; height: 38px;
     border: 1px solid #3b3e37; background: #070807;
     font-size: 21px; line-height: 38px; padding-left: 12px; color: #6d7067;
   }
 
-  #chatter { left: 26px; top: 512px; width: 452px; height: 548px; }
-  #chat-log {
-    position: absolute; left: 16px; right: 14px; top: 58px; bottom: 60px;
-    display: flex; flex-direction: column; justify-content: flex-end;
-    overflow: hidden;
-    font-size: 23px; line-height: 1.32;
+  #records { left: 26px; top: 572px; width: 452px; height: 488px; }
+  #board-title {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin: 12px 16px 0; padding-bottom: 8px;
+    border-bottom: 1px solid #3b3e37;
   }
-  #chat-log div { margin-top: 5px; }
-  #chat-log .n { font-weight: bold; }
-  .c1 { color: #4f7dff; } .c2 { color: #3ad34a; } .c3 { color: #e0321e; }
-  .c4 { color: #d6a106; } .c5 { color: #b08cff; } .c6 { color: #c8cbbf; }
+  #board-name { font: 600 24px/1 Oswald, sans-serif; letter-spacing: 2px; color: #d6a106; }
+  #board-page { font-size: 17px; color: #7d8076; }
+  #board-sub { margin: 6px 16px 0; font-size: 16px; color: #7d8076; letter-spacing: 1px; }
+  #board {
+    position: absolute; left: 12px; right: 12px; top: 128px; bottom: 44px;
+    transition: opacity 0.25s steps(3), transform 0.25s steps(3);
+  }
+  #board.swap { opacity: 0; transform: translateX(-8px) skewX(-6deg); }
+  .row {
+    display: flex; align-items: center; height: 33px; padding: 0 6px;
+    font-size: 22px; border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .row:nth-child(odd) { background: rgba(255,255,255,0.025); }
+  .row .rk { width: 40px; color: #7d8076; }
+  .row .nm { flex: 1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .row .vl { margin-left: 12px; color: #e4e6dc; text-align: right; }
+  .row:first-child .rk, .row:first-child .vl { color: #e0321e; }
+  .row.you { background: rgba(58,211,74,0.12); box-shadow: inset 3px 0 0 #3ad34a; }
+  .row.you .nm::after { content: "  \25C0 YOU"; color: #3ad34a; font-size: 16px; }
+  .row.gap { height: 16px; justify-content: center; color: #4a4d45; font-size: 14px; background: none; border: 0; }
+  #board .offline {
+    margin-top: 60px; text-align: center; font-size: 22px; line-height: 1.6; color: #e0321e;
+    animation: blink 1.4s steps(1) infinite;
+  }
+  #records-foot {
+    position: absolute; left: 16px; right: 16px; bottom: 12px;
+    display: flex; justify-content: space-between; font-size: 16px; color: #6d7067;
+  }
 
   /* ---- Briefing (the story) ---- */
   #brief { left: 508px; top: 128px; width: 790px; height: 2000px; }
@@ -299,11 +339,19 @@
   <div class="panel" id="coms">
     <div class="hd"><span class="t">Coms</span><span class="x">x</span></div>
     <div class="who">
-      <div class="face"></div>
+      <div class="face" id="face">
+        <img id="face-base" src="handler_face.jpg" alt="">
+        <img id="face-r" src="handler_face.jpg" alt="">
+        <img id="face-c" src="handler_face.jpg" alt="">
+        <img id="face-tear" src="handler_face.jpg" alt="">
+        <canvas id="face-noise" width="62" height="68"></canvas>
+        <div class="roll"></div>
+      </div>
       <div class="meta">
         <div class="green">Handler</div>
         <div class="dim">Cobra-7</div>
         <div class="dim">ENCRYPTED CHANNEL</div>
+        <div class="dim" id="handler-n">INTEL 01/01</div>
         <div class="sig"><i></i><i></i><i></i><i class="off"></i><i class="off"></i></div>
       </div>
     </div>
@@ -311,10 +359,12 @@
     <div class="input">&gt;&gt;</div>
   </div>
 
-  <div class="panel" id="chatter">
-    <div class="hd"><span class="t">Chatter</span><span class="x">x</span></div>
-    <div id="chat-log"></div>
-    <div class="input">type message...</div>
+  <div class="panel" id="records">
+    <div class="hd"><span class="t">Personnel Records</span><span class="x">x</span></div>
+    <div id="board-title"><span id="board-name">ACCESSING ARCHIVE</span><span id="board-page"></span></div>
+    <div id="board-sub">&nbsp;</div>
+    <div id="board"></div>
+    <div id="records-foot"><span>SOURCE: TRAITORCO HR</span><span id="records-age"></span></div>
   </div>
 
   <div class="panel" id="brief">
@@ -382,7 +432,7 @@
 
   function GameDetails(servername, serverurl, mapname, maxplayers, steamid, gamemode, volume, language, gamemodeNice) {
     if (mapname) $("map").textContent = mapname.toUpperCase();
-    if (steamid) setOperative(steamid);
+    if (steamid) { setOperative(steamid); mySid = toSid64(steamid) || mySid; }
     unmuteVideo(typeof volume === "number" ? volume : 0.5);
   }
 
@@ -432,57 +482,177 @@
 
   // ---- Handler messages (rotate) ----
   var HANDLER = [
-    "Operative, new bounty available. Details attached.",
-    "Search every body. EvilCorp leaves no witnesses, but it leaves receipts.",
-    "TraitorCo credits are non-refundable. Spend them like you mean it.",
-    "If the detective asks, you were never here.",
-    "Kuboom readings in your sector are within acceptable limits. Probably.",
-    "Trust no one. Especially anyone who says trust no one.",
-    "The scrap is not just scrap. Bring it back to the truck."
+    "Karma is currency here. You earn it, you lose it, you spend it in the shop. Do not waste it.",
+    "Props are scrap. Haul them back to spawn and turn them in for karma. Metal pays best. Engines, generators and cash pay extra.",
+    "Too heavy to carry? The toy store sells carts, an engine hoist and a truck. Scrap riding in the bed still counts.",
+    "Stuck scrap comes loose with the pickaxe. Chipping it into chunks costs you a third of its value.",
+    "The pickaxe also mines karma out of the walls. Every spot runs dry. Teiai Bucks pay out at round end.",
+    "Innocents: stay in the detective's sector. Every two seconds near them pays karma.",
+    "Traitors are paid for style. Drownings, fires and falls pay more than bullets. A Spartan kick or a run-over pays best of all.",
+    "Killing someone who is knocked out pays nothing. Don't be corny.",
+    "Traitors can scrap too, at half rate. It makes good cover."
   ];
   var hi = 0;
   function nextHandler() {
-    $("handler-msg").textContent = HANDLER[hi++ % HANDLER.length];
+    var n = hi++ % HANDLER.length;
+    $("handler-msg").textContent = HANDLER[n];
+    $("handler-n").textContent = "INTEL " + pad(n + 1, 2) + "/" + pad(HANDLER.length, 2);
+    glitchBurst();
   }
   nextHandler();
-  setInterval(nextHandler, 6500);
+  setInterval(nextHandler, 8000);
 
-  // ---- Fake operative chatter ----
-  var CHAT = [
-    ["Viper_6", "c1", "anyone seen Echo?"],
-    ["Ghostline", "c2", "nope"],
-    ["Raven", "c3", "heard a shot near the server rooms"],
-    ["Steel_9", "c6", "stay sharp"],
-    ["Nightjar", "c2", "dead body in storage bay"],
-    ["Viper_6", "c1", "which one"],
-    ["Mantis", "c4", "evilcorp truck just left the depot"],
-    ["Raven", "c3", "who bought the c4"],
-    ["Ghostline", "c2", "not me"],
-    ["Bishop", "c5", "detective is lying"],
-    ["Steel_9", "c6", "everyone is lying"],
-    ["Nightjar", "c2", "the hoist is moving by itself"],
-    ["Mantis", "c4", "thats just kuboom residue dont worry"],
-    ["Viper_6", "c1", "echo was a traitor btw"],
-    ["Bishop", "c5", "rip echo"],
-    ["Raven", "c3", "rip echo"]
+  // ---- Handler portrait: static, colour split, tearing, dropouts ----
+  var noise = $("face-noise").getContext("2d");
+  var noiseImg = noise.createImageData(62, 68);
+  var burstUntil = 0;
+  function glitchBurst() { burstUntil = Date.now() + 450; }
+  function rnd(a, b) { return a + Math.random() * (b - a); }
+  function faceTick() {
+    var d = noiseImg.data;
+    for (var i = 0; i < d.length; i += 4) {
+      var v = Math.random() * 255;
+      d[i] = d[i + 1] = d[i + 2] = v;
+      d[i + 3] = (dropping || Math.random() < 0.45) ? 255 : 0;
+    }
+    noise.putImageData(noiseImg, 0, 0);
+
+    var burst = Date.now() < burstUntil;
+    var split = burst ? rnd(4, 10) : (Math.random() < 0.2 ? rnd(2, 6) : 1.5);
+    $("face-r").style.transform = "translate(" + split + "px," + rnd(-1, 1) + "px)";
+    $("face-c").style.transform = "translate(" + -split + "px," + rnd(-1, 1) + "px)";
+    $("face-base").style.transform = "translate(" + rnd(-1.5, 1.5) + "px," + (Math.random() < 0.05 ? rnd(-6, 6) : 0) + "px)";
+
+    var tear = $("face-tear");
+    if (burst || Math.random() < 0.18) {
+      var top = rnd(0, 85), h = rnd(4, 18);
+      tear.style.clipPath = "inset(" + top + "% 0 " + Math.max(0, 100 - top - h) + "% 0)";
+      tear.style.transform = "translateX(" + rnd(-24, 24) + "px)";
+      tear.style.visibility = "visible";
+    } else {
+      tear.style.visibility = "hidden";
+    }
+  }
+  setInterval(faceTick, 60);
+  var dropping = false;
+  (function dropout() {
+    dropping = true;
+    $("face").classList.add("drop");
+    setTimeout(function () { dropping = false; $("face").classList.remove("drop"); }, rnd(150, 500));
+    setTimeout(dropout, rnd(3500, 9000));
+  })();
+
+  // ---- Personnel records: leaderboards from the server's stats ----
+  // The server uploads these to a GitHub Gist after each round
+  // (RallyTTT: lua/autorun/server/sv_loadingLeaderboard.lua).
+  var RECORDS_URL = "https://gist.githubusercontent.com/drrallyandmrcrook/188f1690c51c93263ad38cf4f82d6410/raw/leaderboard.json";
+  var BOARD_ROWS = 9;
+  var BOARD_SECONDS = 7;
+
+  function pct(a, b) { return Math.round(100 * a / b) + "%"; }
+  var BOARDS = [
+    { name: "MOST DEPLOYED", sub: "ROUNDS PLAYED",
+      score: function (p) { return p.rounds; },
+      show: function (p) { return p.rounds; } },
+    { name: "TRAITOR SUCCESS", sub: "TRAITOR WIN RATE / MIN 20 ROUNDS AS TRAITOR",
+      score: function (p) { return p.tRounds >= 20 ? p.tWins / p.tRounds : null; },
+      show: function (p) { return pct(p.tWins, p.tRounds); } },
+    { name: "INNOCENT SURVIVAL", sub: "INNOCENT WIN RATE / MIN 50 ROUNDS",
+      score: function (p) { return p.iRounds >= 50 ? p.iWins / p.iRounds : null; },
+      show: function (p) { return pct(p.iWins, p.iRounds); } },
+    { name: "PEER REVIEW", sub: "AVERAGE TRAITOR RATING / 5",
+      score: function (p) { return p.rating || null; },
+      show: function (p) { return p.rating.toFixed(2); } },
+    { name: "BIGGEST PAYDAY", sub: "HIGHEST SINGLE KARMA PAYOUT",
+      score: function (p) { return p.highestPay || null; },
+      show: function (p) { return p.highestPay + " K"; } },
+    { name: "LIABILITIES", sub: "TEAMKILLS PER ROUND / WORST FIRST",
+      score: function (p) { return p.rounds ? p.teamkills / p.rounds : null; },
+      show: function (p) { return (p.teamkills / p.rounds).toFixed(2); } }
   ];
-  var ci = 0;
-  function addChat() {
-    var line = CHAT[ci++ % CHAT.length];
-    var d = document.createElement("div");
-    d.innerHTML = '<span class="n ' + line[1] + '"></span>: <span></span>';
-    d.children[0].textContent = line[0];
-    d.children[1].textContent = line[2];
-    var log = $("chat-log");
-    log.appendChild(d);
-    while (log.children.length > 14) log.removeChild(log.firstChild);
+
+  // GMod gives the joining player's SteamID; the records use SteamID64.
+  function toSid64(sid) {
+    sid = String(sid || "");
+    if (/^\d{17}$/.test(sid)) return sid;
+    var m = sid.match(/^STEAM_\d:([01]):(\d+)$/);
+    if (!m || typeof BigInt === "undefined") return null;
+    return String(BigInt("76561197960265728") + BigInt(m[2]) * BigInt(2) + BigInt(m[1]));
   }
-  function chatLoop() {
-    addChat();
-    setTimeout(chatLoop, 1800 + Math.random() * 3200);
+  var mySid = toSid64(params.get("sid"));
+
+  var records = null, boardIndex = 0;
+
+  function showBoard() {
+    var b = BOARDS[boardIndex % BOARDS.length];
+    var page = boardIndex % BOARDS.length + 1;
+    boardIndex++;
+
+    var ranked = records.players
+      .map(function (p) { return { p: p, s: b.score(p) }; })
+      .filter(function (r) { return r.s !== null && r.s !== undefined; })
+      .sort(function (x, y) { return y.s - x.s; });
+    if (!ranked.length) return showBoard();
+
+    var el = $("board");
+    el.classList.add("swap");
+    setTimeout(function () {
+      $("board-name").textContent = "// " + b.name;
+      $("board-sub").textContent = b.sub;
+      $("board-page").textContent = pad(page, 2) + "/" + pad(BOARDS.length, 2);
+      el.innerHTML = "";
+
+      // Top rows, plus the joining player's own row if they rank lower.
+      var mine = -1;
+      ranked.forEach(function (r, i) { if (r.p.sid === mySid) mine = i; });
+      var rows = ranked.slice(0, BOARD_ROWS).map(function (r, i) { return [i, r]; });
+      if (mine >= BOARD_ROWS) {
+        rows = rows.slice(0, BOARD_ROWS - 1);
+        rows.push(null, [mine, ranked[mine]]);
+      }
+
+      rows.forEach(function (entry) {
+        var row = document.createElement("div");
+        if (!entry) {
+          row.className = "row gap";
+          row.textContent = "· · ·";
+        } else {
+          row.className = "row" + (entry[1].p.sid === mySid ? " you" : "");
+          row.innerHTML = '<span class="rk"></span><span class="nm"></span><span class="vl"></span>';
+          row.children[0].textContent = pad(entry[0] + 1, 2);
+          row.children[1].textContent = String(entry[1].p.name).toUpperCase();
+          row.children[2].textContent = b.show(entry[1].p);
+        }
+        el.appendChild(row);
+      });
+      el.classList.remove("swap");
+      glitchBurst();
+    }, 260);
   }
-  for (var k = 0; k < 5; k++) addChat();
-  setTimeout(chatLoop, 1500);
+
+  function showAge() {
+    if (!records || !records.updated) return;
+    var mins = Math.max(0, Math.floor((Date.now() / 1000 - records.updated) / 60));
+    $("records-age").textContent = "UPDATED " + (mins < 1 ? "JUST NOW" : mins < 60 ? mins + " MIN AGO" :
+      mins < 2880 ? Math.floor(mins / 60) + " HR AGO" : Math.floor(mins / 1440) + " DAYS AGO");
+  }
+
+  function recordsOffline() {
+    $("board-name").textContent = "// ARCHIVE OFFLINE";
+    $("board").innerHTML = '<div class="offline">CONNECTION TO RECORDS<br>SEVERED</div>';
+  }
+
+  fetch(RECORDS_URL + "?t=" + Math.floor(Date.now() / 60000))
+    .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function (data) {
+      if (!data || !data.players || !data.players.length) throw new Error("empty");
+      records = data;
+      showAge();
+      showBoard();
+      setInterval(showBoard, BOARD_SECONDS * 1000);
+      setInterval(showAge, 30000);
+    })
+    .catch(recordsOffline);
 
   // ---- Video sound: starts muted (always allowed to autoplay), then
   // unmutes at the player's in-game music volume once GMod reports it. ----
